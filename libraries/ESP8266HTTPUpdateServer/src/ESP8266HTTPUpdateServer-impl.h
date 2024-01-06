@@ -89,8 +89,10 @@ void ESP8266HTTPUpdateServerTemplate<ServerType>::setup(ESP8266WebServerTemplate
         }
 
         WiFiUDP::stopAll();
-        if (_serial_output)
+        if (_serial_output){
           Serial.printf("Update: %s\n", upload.filename.c_str());
+          Serial.printf("UploadCL: %u\n", upload.contentLength);
+        }
         if (upload.name == "filesystem") {
           size_t fsSize = ((size_t) &_FS_end - (size_t) &_FS_start);
           close_all_fs();
@@ -98,7 +100,19 @@ void ESP8266HTTPUpdateServerTemplate<ServerType>::setup(ESP8266WebServerTemplate
             if (_serial_output) Update.printError(Serial);
           }
         } else {
-          uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+          
+          #ifdef ESP8266_UPDATER_OVERWRITE_FS
+            uint32_t maxSketchSpace;
+            if (upload.contentLength>0){
+              //round length to flash sector size:
+              maxSketchSpace = (upload.contentLength + FLASH_SECTOR_SIZE - 1) & (~(FLASH_SECTOR_SIZE - 1));
+            }else{ //not provided contentLength, use max available size, include FS:
+              maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+              maxSketchSpace += ((size_t) &_FS_end - (size_t) &_FS_start);
+            }
+          #else
+            uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+          #endif
           if (!Update.begin(maxSketchSpace, U_FLASH)){//start with max available size
             _setUpdaterError();
           }

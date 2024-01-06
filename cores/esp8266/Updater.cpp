@@ -137,13 +137,13 @@ bool UpdaterClass::begin(size_t size, int command, int ledPin, uint8_t ledOn) {
         DEBUG_UPDATER.printf_P(PSTR("[begin] currentSketchSize: 0x%08zX (%zd)\n"), currentSketchSize, currentSketchSize);
 #endif
 
-#ifdef ESP8266_UPDATER_OVERSPIFFS
-    //force end of SPIFFS area
+#ifdef ESP8266_UPDATER_OVERWRITE_FS
+    //force end of FS area
     if(updateStartAddress < currentSketchSize) {
       uintptr_t updateEndAddress = (uintptr_t)&_FS_end - 0x40200000;
       updateStartAddress = (updateEndAddress > roundedSize)? (updateEndAddress - roundedSize) : 0;
       #ifdef DEBUG_UPDATER
-        DEBUG_UPDATER.printf_P(PSTR("[begin] updateEndAddress forced:  0x%08zX (%zd)\n"), updateEndAddress, updateEndAddress);
+        DEBUG_UPDATER.printf_P(PSTR("[begin] updateEndAddress FSend:  0x%08zX (%zd)\n"), updateEndAddress, updateEndAddress);
       #endif
     }
 #endif
